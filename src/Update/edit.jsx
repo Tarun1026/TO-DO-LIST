@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Home.css";
+import "../HomePage/Home.css";
 
 const Edit = () => {
   const [id, setId] = useState(0);
