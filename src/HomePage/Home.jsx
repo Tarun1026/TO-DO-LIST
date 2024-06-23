@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdDeleteForever } from "react-icons/md";
+import { IoMdNotifications } from "react-icons/io";
+
 import { Link } from "react-router-dom";
 import "./Home.css";
+import { useFormik } from "formik";
+import { ToDoListSchema } from "../schemas";
 
-function Home() {
-  const [list, setList] = useState("");
+const initialValues = {
+  list: "",
+};
+
+const Home = () => {
+  const { values, errors, touched, handleBlur, handleChange, handleSubmit } =
+    useFormik({
+      initialValues: initialValues,
+      validationSchema: ToDoListSchema,
+      onSubmit: async (values, { resetForm }) => {
+        try {
+          await axios.post("https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data", {
+            list: values.list,
+          });
+          readData();
+          resetForm();
+        } catch (error) {
+          console.error("Error adding data: ", error);
+        }
+      },
+    });
+
   const [data, setData] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState(
+    JSON.parse(localStorage.getItem("completedTasks"))
+  );
 
   const readData = async () => {
     try {
@@ -23,17 +50,7 @@ function Home() {
     readData();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post("https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data", {
-        list: list,
-      });
-      readData();
-    } catch (error) {
-      console.error("Error adding data: ", error);
-    }
-  };
+ 
 
   const handleDelete = async (id) => {
     try {
@@ -46,6 +63,15 @@ function Home() {
     }
   };
 
+
+  const handleTick = (id) => {
+    setCompletedTasks((prev) => {
+      const updated = { ...prev, [id]: !prev[id] };
+      localStorage.setItem("completedTasks", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const setToLocalStorage = (id, list) => {
     localStorage.setItem("id", id);
     localStorage.setItem("list", list);
@@ -53,46 +79,72 @@ function Home() {
 
   return (
     <>
-      <div className="container">
-        <h1>TO DO LIST</h1>
-      </div>
-      <div className="div-1">
-        <input
-          type="text"
-          className="box"
-          placeholder="What do you want to do?"
-          onChange={(e) => setList(e.target.value)}
-        />
-        <button className="btn" onClick={handleSubmit}>
-          ADD
-        </button>
-      </div>
+      <form onSubmit={handleSubmit}>
+        <div className="notification-icon">
+          <IoMdNotifications />
+        </div>
+        <h2 className="morning">Morning</h2>
+        <h1>TO - DO LIST</h1>
 
-      <div className="contain">
-        <h2>To do Items:</h2>
-        <ul>
-          {data.map((item) => (
-            <li key={item.id}>
-              <span>{item.list}</span>
-              <div className="buttons">
-                <button onClick={() => handleDelete(item.id)}>
-                  <MdDeleteForever className="icons" />
-                </button>
-                <Link to="/edit">
-                  <button
-                    onClick={() => setToLocalStorage(item.id, item.list)}
-                    className="btn-update"
+        <div className="div-1">
+          <input
+            type="text"
+            className="box"
+            placeholder="What do you want to do?"
+            name="list"
+            value={values.list}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          
+          />
+
+          <button type="submit" className="btn">
+            ADD
+          </button>
+        </div>
+        { errors.list ? (
+          <div className="form-error">{errors.list}</div>
+        ) : null}
+
+        <div className="contain">
+          <ul>
+            {data.map((item) => (
+              <li key={item.id}>
+                <span>
+                  
+              
+                  
+                  {item.list}
+                </span>
+                
+                <div className="buttons">
+                <button
+                    className={`done ${completedTasks[item.id] ? "completed" : ""}`}
+                    onClick={() => handleTick(item.id)}
+                    type="button"
                   >
-                    Edit
+                    <i className="tick"></i>
                   </button>
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+                  <button onClick={() => handleDelete(item.id)} type="button">
+                    <MdDeleteForever className="icons" />
+                  </button>
+                  <Link to="/edit">
+                    <button
+                      onClick={() => setToLocalStorage(item.id, item.list) }
+                      className="btn-update"
+                      type="button"
+                    >
+                      Edit
+                    </button>
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </form>
     </>
   );
-}
+};
 
 export default Home;
