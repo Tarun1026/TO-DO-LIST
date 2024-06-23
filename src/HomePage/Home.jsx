@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdDeleteForever } from "react-icons/md";
 import { IoMdNotifications } from "react-icons/io";
-
 import { Link } from "react-router-dom";
 import "./Home.css";
 import { useFormik } from "formik";
@@ -32,7 +31,7 @@ const Home = () => {
 
   const [data, setData] = useState([]);
   const [completedTasks, setCompletedTasks] = useState(
-    JSON.parse(localStorage.getItem("completedTasks"))
+    JSON.parse(localStorage.getItem("completedTasks")) || {}
   );
 
   const readData = async () => {
@@ -50,19 +49,23 @@ const Home = () => {
     readData();
   }, []);
 
- 
-
   const handleDelete = async (id) => {
     try {
       await axios.delete(
         `https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data/${id}`
       );
       readData();
+      
+      setCompletedTasks((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        localStorage.setItem("completedTasks", JSON.stringify(updated));
+        return updated;
+      });
     } catch (error) {
       console.error("Error deleting data: ", error);
     }
   };
-
 
   const handleTick = (id) => {
     setCompletedTasks((prev) => {
@@ -95,14 +98,13 @@ const Home = () => {
             value={values.list}
             onChange={handleChange}
             onBlur={handleBlur}
-          
           />
 
           <button type="submit" className="btn">
             ADD
           </button>
         </div>
-        { errors.list ? (
+        {errors.list ? (
           <div className="form-error">{errors.list}</div>
         ) : null}
 
@@ -110,15 +112,9 @@ const Home = () => {
           <ul>
             {data.map((item) => (
               <li key={item.id}>
-                <span>
-                  
-              
-                  
-                  {item.list}
-                </span>
-                
+                <span>{item.list}</span>
                 <div className="buttons">
-                <button
+                  <button
                     className={`done ${completedTasks[item.id] ? "completed" : ""}`}
                     onClick={() => handleTick(item.id)}
                     type="button"
@@ -130,7 +126,7 @@ const Home = () => {
                   </button>
                   <Link to="/edit">
                     <button
-                      onClick={() => setToLocalStorage(item.id, item.list) }
+                      onClick={() => setToLocalStorage(item.id, item.list)}
                       className="btn-update"
                       type="button"
                     >
