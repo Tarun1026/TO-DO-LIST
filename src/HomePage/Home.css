@@ -368,7 +368,7 @@ margin-top: 3rem;
   }
 
   .box {
-    width: 6rem;
+     width: 15rem;
     margin-top: 0.8rem;
   }
 
@@ -378,12 +378,11 @@ margin-top: 3rem;
 .container-2{
   margin-left: 5rem;
 }
-  .box {
-    width: 15rem;
-  }
+  
 
   .btn {
-    width: 5rem;
+    width: 19rem;
+    margin-top: 5px;
   }
 
   .icon-d{
