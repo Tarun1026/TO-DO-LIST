@@ -110,7 +110,7 @@ const Home = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="form-center">
         {showAlert && (
           <div className="alert">{alertMessage}</div>
         )}

@@ -286,18 +286,22 @@ margin-top: 3rem;
 @media (max-width: 480px) {
 
   .notification-icon {
-    top: 10px;
-    right:-5rem;
-    font-size: 2rem;
+    top: 15px;
+    right:-16rem;
+    font-size: 4rem;
   }
 
   h1{
-    margin-left: 4.5rem;
+    margin-left: 4.9rem;
   }
 
   .morning{
     margin-left: 6rem;
   }
+
+  /* .li{
+    font-size: 8rem;;
+  } */
 
   .div-1 {
     /* flex-direction: row; */
@@ -307,14 +311,14 @@ margin-top: 3rem;
   }
 
   .box {
-     width: 15rem;
+     width: 23rem;
     margin-top: 0.8rem;
-    margin-left: 1rem;
+    margin-left: 10rem;
   }
   .box-dueDate{
-     width: 15rem;
+     width: 23rem;
     margin-top: 0.8rem;
-    margin-left: 1rem;
+    margin-left: 10rem;
   }
 
 .contain{
@@ -331,13 +335,14 @@ margin-top: 3rem;
   }
 
   .icon-d{
-    height: 2.5em;
+    height: 1.7rem;
   }
 
 
 .buttons{
   margin-right: 6rem;
 }
+
 
 
 .form-control{
