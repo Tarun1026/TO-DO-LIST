@@ -1,28 +1,15 @@
-
-import Home from './HomePage/Home'
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css'
-import Edit from './Update/edit';
-import DescriptionEditPage from './Description/description';
+import Home from './HomePage/Home';
+
+import './App.css';
 
 function App() {
-
   return (
-    <>
-    <Router>
-      <Routes>
-        <Route exact path="/" element={<Home />} />
-        <Route exact path="/edit" element={<Edit />} />
-        <Route
-          exact
-          path="/description/edit/:id"
-          element={<DescriptionEditPage />}
-        />
-      
-      </Routes>
-    </Router>
-    </>
-  )
+  <>
+  <Home/>
+  </>
+  );
 }
 
-export default App
+export default App;

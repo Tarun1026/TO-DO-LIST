@@ -1,49 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { MdDeleteForever } from "react-icons/md";
-import { MdEdit } from "react-icons/md";
+import { MdDeleteForever, MdEdit } from "react-icons/md";
 import { IoMdNotifications } from "react-icons/io";
-import { Link } from "react-router-dom";
-import "./Home.css";
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { ToDoListSchema } from "../schemas";
-import { IoCalendarNumberOutline } from "react-icons/io5";
+import "./Home.css";
 
 const initialValues = {
   list: "",
+  description: "",
   dueDate: "",
 };
 
 const Home = () => {
-  const { values, errors, handleBlur, handleChange, handleSubmit } =
+  const [data, setData] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState(
+    JSON.parse(localStorage.getItem("completedTasks")) || {}
+  );
+  const [editingTask, setEditingTask] = useState(null);
+  const [alertMessage, setAlertMessage] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const titleInputRef = useRef(null); 
+
+  const { values, errors, handleBlur, handleChange, handleSubmit, setValues } =
     useFormik({
       initialValues: initialValues,
       validationSchema: ToDoListSchema,
       onSubmit: async (values, { resetForm }) => {
         try {
-          await axios.post(
-            "https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data",
-            {
-              list: values.list,
-              dueDate: values.dueDate, 
-            }
-          );
-          readData();
+          if (editingTask) {
+            await axios.put(
+              `https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data/${editingTask.id}`,
+              values
+            );
+            setEditingTask(null);
+            setAlertMessage("Task updated successfully");
+          } else {
+            await axios.post(
+              "https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data",
+              values
+            );
+            setAlertMessage("Task added successfully");
+          }
           resetForm();
+          readData();
+          setShowAlert(true);
+          setTimeout(() => {
+            setShowAlert(false);
+          }, 3000);
         } catch (error) {
-          console.error("Error adding data: ", error);
+          console.error("Error saving data: ", error);
         }
       },
     });
-
-  const [data, setData] = useState([]);
-  const [completedTasks, setCompletedTasks] = useState(
-    JSON.parse(localStorage.getItem("completedTasks")) || {}
-  );
-  const [editingDescriptionItemId, setEditingDescriptionItemId] = useState(null);
-  const [editedDescriptions, setEditedDescriptions] = useState({});
-  const [editingDueDateItemId, setEditingDueDateItemId] = useState(null); 
-  const [editedDueDates, setEditedDueDates] = useState({}); 
 
   const readData = async () => {
     try {
@@ -66,13 +76,17 @@ const Home = () => {
         `https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data/${id}`
       );
       readData();
-
       setCompletedTasks((prev) => {
         const updated = { ...prev };
         delete updated[id];
         localStorage.setItem("completedTasks", JSON.stringify(updated));
         return updated;
       });
+      setAlertMessage("Task deleted successfully");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
     } catch (error) {
       console.error("Error deleting data: ", error);
     }
@@ -86,78 +100,20 @@ const Home = () => {
     });
   };
 
-  const setToLocalStorage = (id, list) => {
-    localStorage.setItem("id", id);
-    localStorage.setItem("list", list);
-  };
-
-  const updateDescription = async (id, updatedDescription) => {
-    try {
-      await axios.put(
-        `https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data/${id}`,
-        { description: updatedDescription }
-      );
-      readData();
-    } catch (error) {
-      console.error("Error updating description: ", error);
+  const handleEdit = (task) => {
+    setEditingTask(task);
+    setValues(task);
+    if (titleInputRef.current) {
+      titleInputRef.current.focus();
     }
-  };
-
-  const updateDueDate = async (id, updatedDueDate) => {
-    try {
-      await axios.put(
-        `https://6675e56ba8d2b4d072f1d5b1.mockapi.io/data/${id}`,
-        { dueDate: updatedDueDate }
-      );
-      readData();
-    } catch (error) {
-      console.error("Error updating due date: ", error);
-    }
-  };
-
-  const handleToggleDescriptionEdit = (id) => {
-    setEditingDescriptionItemId((prevId) => (prevId === id ? null : id));
-    if (id === editingDescriptionItemId) {
-      if (editedDescriptions[id]) {
-        updateDescription(id, editedDescriptions[id]);
-        setEditedDescriptions((prev) => ({
-          ...prev,
-          [id]: undefined,
-        }));
-      }
-    }
-  };
-
-  const handleToggleDueDateEdit = (id) => {
-    setEditingDueDateItemId((prevId) => (prevId === id ? null : id));
-    if (id === editingDueDateItemId) {
-      if (editedDueDates[id]) {
-        updateDueDate(id, editedDueDates[id]);
-        setEditedDueDates((prev) => ({
-          ...prev,
-          [id]: undefined,
-        }));
-      }
-    }
-  };
-
-  const handleDescriptionChange = (id, value) => {
-    setEditedDescriptions((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
-  };
-
-  const handleDueDateChange = (id, value) => {
-    setEditedDueDates((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
+        {showAlert && (
+          <div className="alert">{alertMessage}</div>
+        )}
         <div className="notification-icon">
           <IoMdNotifications />
         </div>
@@ -166,22 +122,47 @@ const Home = () => {
 
         <div className="div-1">
           <input
+            ref={titleInputRef}
             type="text"
             className="box"
-            placeholder="What do you want to do?"
+            placeholder="Title"
             name="list"
             value={values.list}
             onChange={handleChange}
             onBlur={handleBlur}
           />
-       
-          <button type="submit" className="btn">
-            ADD
-          </button>
+          {errors.list ? <div className="form-error">{errors.list}</div> : null}
+          <input
+            type="text"
+            className="box"
+            placeholder="Enter description..."
+            name="description"
+            value={values.description}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.description ? (
+            <div className="form-error">{errors.description}</div>
+          ) : null}
+          <input
+            type="date"
+            className="box-dueDate"
+            placeholder="Due Date"
+            name="dueDate"
+            value={values.dueDate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.dueDate ? (
+            <div className="form-error">{errors.dueDate}</div>
+          ) : null}
+
+          <div className="btn-add">
+            <button type="submit" className="btn">
+              {editingTask ? "UPDATE" : "ADD"}
+            </button>
+          </div>
         </div>
-        {errors.list ? (
-          <div className="form-error">{errors.list}</div>
-        ) : null}
 
         <div className="contain">
           <ul>
@@ -195,58 +176,13 @@ const Home = () => {
                   </p>
                 </div>
                 <div className="buttons">
-                  {editingDescriptionItemId === item.id ? (
-                    <div className="description-container">
-                      <input
-                        type="text"
-                        className="description-input"
-                        value={
-                          editedDescriptions[item.id] || item.description
-                        }
-                        onChange={(e) =>
-                          handleDescriptionChange(item.id, e.target.value)
-                        }
-                      />
-                      <button
-                        className="save-description-btn"
-                        onClick={() => handleToggleDescriptionEdit(item.id)}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  ) : (
-                    <Link
-                      to={`/description/edit/${item.id}`} 
-                      className="edit-description-link"
-                    >
-                      <MdEdit className="icon-d"/>
-                    </Link>
-                  )}
-                  {editingDueDateItemId === item.id ? (
-                    <div className="due-date-container">
-                      <input
-                        type="date"
-                        className="due-date-input"
-                        value={editedDueDates[item.id] || item.dueDate}
-                        onChange={(e) =>
-                          handleDueDateChange(item.id, e.target.value)
-                        }
-                      />
-                      <button
-                        className="save-due-date-btn"
-                        onClick={() => handleToggleDueDateEdit(item.id)}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      
-                      onClick={() => handleToggleDueDateEdit(item.id)}
-                    >
-                     <IoCalendarNumberOutline className="icon-c"/>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleEdit(item)}
+                    type="button"
+                    className="edit-description-link"
+                  >
+                    <MdEdit className="icon-d" />
+                  </button>
                   <button
                     className={`done ${
                       completedTasks[item.id] ? "completed" : ""
@@ -259,23 +195,10 @@ const Home = () => {
                   <button onClick={() => handleDelete(item.id)} type="button">
                     <MdDeleteForever className="icons" />
                   </button>
-                  <Link to="/edit">
-                    <button
-                      onClick={() =>
-                        setToLocalStorage(item.id, item.list)
-                      }
-                      className="btn-update"
-                      type="button"
-                    >
-                      Edit
-                    </button>
-                  </Link>
                 </div>
               </li>
             ))}
           </ul>
-        
-
         </div>
       </form>
     </>
